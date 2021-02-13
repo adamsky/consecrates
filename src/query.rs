@@ -1,7 +1,6 @@
 //! Querying-related structures.
 
 /// Describes options for a single query.
-#[derive(Default)]
 pub struct Query {
     /// String passed to the api as `query`
     pub string: Option<String>,
@@ -15,6 +14,19 @@ pub struct Query {
     pub category: Option<Category>,
     /// Sort the results on the API query level
     pub sort: Option<Sorting>,
+}
+
+impl Default for Query {
+    fn default() -> Self {
+        Self {
+            string: None,
+            page: None,
+            per_page: Some(100),
+            keyword: None,
+            category: None,
+            sort: None,
+        }
+    }
 }
 
 impl Query {

@@ -13,7 +13,7 @@ use anyhow::Result;
 use http_req::request::Request;
 use http_req::uri::Uri;
 
-use api::Crates;
+use api::{Crates, Version};
 
 /// Base url of the API.
 const BASE_URL: &'static str = "https://crates.io/api/v1/";
@@ -56,7 +56,7 @@ impl Client {
     }
 
     /// Gets a page of crates, using a set of query options.
-    pub fn crates(&self, query: Query) -> Result<Crates> {
+    pub fn get_crates(&self, query: Query) -> Result<Crates> {
         // construct the target url
         let mut url = self.base_url.clone();
         url.push_str("crates?");
@@ -85,8 +85,17 @@ impl Client {
         Ok(resp)
     }
 
+    /// Gets crate information for a particular version of the given crate.
+    pub fn get_crate_version(&self, crate_id: &str, crate_version: &str) -> Result<Version> {
+        let mut url = self.base_url.clone();
+        url.push_str(&format!("crates/{}/{}", crate_id, crate_version));
+        let data = self.get(&url)?;
+        let version = serde_json::from_slice(&data)?;
+        Ok(version)
+    }
+
     /// Gets the readme for the given crate.
-    pub fn readme(&mut self, crate_id: &str, crate_version: &str) -> Result<String> {
+    pub fn get_readme(&self, crate_id: &str, crate_version: &str) -> Result<String> {
         let mut url = self.base_url.clone();
         url.push_str(&format!("crates/{}/{}/readme", crate_id, crate_version));
         let data = self.get(&url)?;
