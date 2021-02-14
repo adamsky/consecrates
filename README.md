@@ -1,6 +1,6 @@
 # consecrates
 
-Tiny but virtuous [crates.io](https://crates.io) client.
+Tiny but virtuous [crates.io](https://crates.io) API client.
 
 The main aim of this library is to provide an easy way to query crates
 information without bringing in too many dependencies.
