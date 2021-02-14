@@ -5,10 +5,15 @@ use std::collections::HashMap;
 use chrono::{DateTime, NaiveDate, Utc};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Meta {
+pub struct PagingMeta {
     pub total: u64,
     pub next_page: Option<String>,
     pub prev_page: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Meta {
+    pub total: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -45,7 +50,7 @@ pub struct Crate {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Crates {
     pub crates: Vec<Crate>,
-    pub meta: Meta,
+    pub meta: PagingMeta,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -85,11 +90,23 @@ pub struct Category {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Categories {
+    pub categories: Vec<Category>,
+    pub meta: Meta,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Keyword {
     pub id: String,
     pub keyword: String,
     pub crates_cnt: u64,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Keywords {
+    pub keywords: Vec<Keyword>,
+    pub meta: Meta,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -159,6 +176,7 @@ pub struct AuthorsResponse {
     pub users: Vec<User>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Authors {
     pub names: Vec<String>,
     pub users: Vec<User>,

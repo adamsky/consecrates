@@ -58,10 +58,11 @@ pub use query::{Category, Query, Sorting};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use http_req::request::Request;
 use http_req::uri::Uri;
 
+use crate::api::{Authors, Categories, Crate, Dependencies, Downloads, Keywords, Owners, Summary};
 use api::{Crates, Version};
 
 /// Base url of the API.
@@ -134,17 +135,66 @@ impl Client {
         Ok(resp)
     }
 
+    /// Gets information about a particular crate.
+    pub fn get_crate(&self, crate_id: &str) -> Result<Crate> {
+        let url = format!("{}crates/{}", self.base_url, crate_id);
+        let data = self.get(&url)?;
+        let crate_ = serde_json::from_slice(&data)?;
+        Ok(crate_)
+    }
+
     /// Gets crate information for a particular version of the given crate.
     pub fn get_crate_version(&self, crate_id: &str, crate_version: &str) -> Result<Version> {
-        let mut url = self.base_url.clone();
-        url.push_str(&format!("crates/{}/{}", crate_id, crate_version));
+        let url = format!("{}crates/{}/{}", self.base_url, crate_id, crate_version);
         let data = self.get(&url)?;
         let version = serde_json::from_slice(&data)?;
         Ok(version)
     }
 
-    /// Gets the readme for the given crate.
-    pub fn get_readme(&self, crate_id: &str, crate_version: &str) -> Result<String> {
+    /// Gets information about the download stats for the given crate.
+    pub fn get_crate_downloads(&self, crate_id: &str) -> Result<Downloads> {
+        let url = format!("{}crates/{}/downloads", self.base_url, crate_id);
+        let data = self.get(&url)?;
+        let downloads = serde_json::from_slice(&data)?;
+        Ok(downloads)
+    }
+
+    /// Gets a list of dependencies for a particular version of the given crate.
+    pub fn get_crate_dependencies(
+        &self,
+        crate_id: &str,
+        crate_version: &str,
+    ) -> Result<Dependencies> {
+        let url = format!(
+            "{}crates/{}/{}/dependencies",
+            self.base_url, crate_id, crate_version
+        );
+        let data = self.get(&url)?;
+        let dependencies = serde_json::from_slice(&data)?;
+        Ok(dependencies)
+    }
+
+    /// Gets information about the owners of the given crate.
+    pub fn get_crate_owners(&self, crate_id: &str) -> Result<Owners> {
+        let url = format!("{}crates/{}/owners", self.base_url, crate_id);
+        let data = self.get(&url)?;
+        let owners = serde_json::from_slice(&data)?;
+        Ok(owners)
+    }
+
+    /// Gets information about the authors for a particular version of the given crate.
+    pub fn get_crate_authors(&self, crate_id: &str, crate_version: &str) -> Result<Authors> {
+        let url = format!(
+            "{}crates/{}/{}/authors",
+            self.base_url, crate_id, crate_version
+        );
+        let data = self.get(&url)?;
+        let authors = serde_json::from_slice(&data)?;
+        Ok(authors)
+    }
+
+    /// Gets the readme for a particular version of the given crate.
+    pub fn get_crate_readme(&self, crate_id: &str, crate_version: &str) -> Result<String> {
         let mut url = self.base_url.clone();
         url.push_str(&format!("crates/{}/{}/readme", crate_id, crate_version));
         let data = self.get(&url)?;
@@ -152,10 +202,113 @@ impl Client {
         Ok(readme)
     }
 
+    /// Gets registry-wide summary.
+    pub fn get_registry_summary(&self) -> Result<Summary> {
+        let mut url = self.base_url.clone();
+        url.push_str("summary");
+        let data = self.get(&url)?;
+        let summary = serde_json::from_slice(&data)?;
+        Ok(summary)
+    }
+
+    /// Gets information about a category.
+    ///
+    /// # Query details
+    ///
+    /// This function accepts a `Query` object but can only use it's `string`
+    /// or `category` fields.
+    pub fn get_category(&self, query: Query) -> Result<api::Category> {
+        let mut cat_string = None;
+        if let Some(s) = query.string {
+            cat_string = Some(s);
+        } else if let Some(cat) = query.category {
+            cat_string = Some(cat.to_str().to_string());
+        }
+
+        if let Some(cats) = cat_string {
+            let mut url = self.base_url.clone();
+            url.push_str(&format!("categories/{}", &cats));
+            let data = self.get(&url)?;
+            let category = serde_json::from_slice(&data)?;
+            Ok(category)
+        } else {
+            Err(Error::msg(
+                "didn't provide either a string or category argument with query",
+            ))
+        }
+    }
+
+    /// Gets a paged list of categories available with the registry.
+    ///
+    /// # Query details
+    ///
+    /// This function accepts a `Query` object but can only use it's `page`
+    /// and `per_page` fields.
+    pub fn get_categories(&self, query: Query) -> Result<Categories> {
+        let mut url = self.base_url.clone();
+        url.push_str("categories?");
+        if let Some(page) = query.page {
+            url.push_str(&format!("page={}", page));
+        }
+        if let Some(per_page) = query.per_page {
+            url.push_str(&format!("&per_page={}", per_page));
+        }
+        let data = self.get(&url)?;
+        let categories = serde_json::from_slice(&data)?;
+        Ok(categories)
+    }
+
+    /// Gets information about a category.
+    ///
+    /// # Query details
+    ///
+    /// This function accepts a `Query` object but can only use it's `string`
+    /// or `keyword` fields.
+    pub fn get_keyword(&self, query: Query) -> Result<api::Keyword> {
+        let mut key_string = None;
+        if let Some(s) = query.string {
+            key_string = Some(s);
+        } else if let Some(key) = query.keyword {
+            key_string = Some(key);
+        }
+
+        if let Some(keys) = key_string {
+            let mut url = self.base_url.clone();
+            url.push_str(&format!("keywords/{}", &keys));
+            let data = self.get(&url)?;
+            let keyword = serde_json::from_slice(&data)?;
+            Ok(keyword)
+        } else {
+            Err(Error::msg(
+                "didn't provide either a string or keyword argument with query",
+            ))
+        }
+    }
+
+    /// Gets a paged list of keywords used by crates within the registry.
+    ///
+    /// # Query details
+    ///
+    /// This function accepts a `Query` object but can only use it's `page`
+    /// and `per_page` fields.
+    pub fn get_keywords(&self, query: Query) -> Result<Keywords> {
+        let mut url = self.base_url.clone();
+        url.push_str("keywords?");
+        if let Some(page) = query.page {
+            url.push_str(&format!("page={}", page));
+        }
+        if let Some(per_page) = query.per_page {
+            url.push_str(&format!("&per_page={}", per_page));
+        }
+        let data = self.get(&url)?;
+        let keywords = serde_json::from_slice(&data)?;
+        Ok(keywords)
+    }
+
     /// Gets data from the provided url.
     ///
     /// Only returns response body.
-    pub fn get(&self, url: &str) -> Result<Vec<u8>> {
+    fn get(&self, url: &str) -> Result<Vec<u8>> {
         // honor the rate limit
         loop {
             let mut lr = self.last_request.lock().unwrap();
