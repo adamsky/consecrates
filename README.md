@@ -3,14 +3,14 @@
 Tiny but virtuous [crates.io](https://crates.io) client.
 
 The main aim of this library is to provide an easy way to query crates
-information **without bringing too many dependencies in**.
+information without bringing in too many dependencies.
 
 It's loosely modeled after the
 [crates_io_api](https://crates.io/crates/crates_io_api) crate. Main differences
 include:
-- about half the number of dependencies
-- no async (simple polling coming soon)
-- non-complete interface, no multi-request client methods like `full_crate` or
+- about 70% cut in the number of dependencies
+- no async 
+- no multi-request client methods like `full_crate` or
   `all_crates`
 - ability to use `category` and `keyword` specifiers for querying crates
 - ability to convert simple string composite queries such as
@@ -44,7 +44,7 @@ println!("{:?}", crates);
 ## Crawler policy
 
 Please consult the
-[official Crawler Policy](https://crates.io/policies#crawlers) before using
+[official crawler policy](https://crates.io/policies#crawlers) before using
 this library. Rate limiting is fixed at the lowest tolerated value. When
 creating a client you will need to input a proper user-agent string.
 
