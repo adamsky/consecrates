@@ -22,7 +22,7 @@ include:
 Paste the following into your project's `Cargo.toml` file:
 
 ```toml
-consecrates = "0.1.0"
+consecrates = "0.1.1"
 ```
 
 Create a new client and issue a query: 
