@@ -55,16 +55,18 @@ mod query;
 
 pub use query::{Category, Query, Sorting};
 
+use std::convert::TryFrom;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 use anyhow::{Error, Result};
 use http_req::request::Request;
 use http_req::uri::Uri;
-
-use crate::api::{Authors, Categories, Crate, Dependencies, Downloads, Keywords, Owners, Summary};
-use api::{Crates, Version};
 use serde::de::DeserializeOwned;
+
+use api::{
+    Authors, Categories, Crate, Crates, Dependencies, Downloads, Keywords, Owners, Summary, Version,
+};
 
 /// Base url of the API.
 const BASE_URL: &'static str = "https://crates.io/api/v1/";
@@ -482,9 +484,8 @@ impl Client {
             ));
         }
         let mut buffer = Vec::new();
-        let uri: Uri = url
-            .parse()
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+        let uri =
+            Uri::try_from(url).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
         let _ = Request::new(&uri)
             .header("User-Agent", &self.user_agent)
             .send(&mut buffer)
